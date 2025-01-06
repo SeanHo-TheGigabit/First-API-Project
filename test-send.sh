@@ -1,6 +1,6 @@
 #!/bin/bash
 
-backend_url=http://localhost:5555
+backend_url=http://localhost:5000
 
 # To get all stores
 echo "GET /store"

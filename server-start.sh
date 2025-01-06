@@ -1,3 +1,3 @@
 #!/bin/bash
 
-flask run --host=0.0.0.0 --port=5555
+flask run --host=0.0.0.0 --port=5555 --reload
