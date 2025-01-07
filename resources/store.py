@@ -6,7 +6,7 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 
 from db import db
-from models import StoreModel, ItemModel
+from models import StoreModel
 
 from .schemas import StoreSchema
 
