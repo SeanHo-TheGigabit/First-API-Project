@@ -11,6 +11,9 @@ import models
 
 from resources.item import blp as ItemBlueprint
 from resources.store import blp as StoreBlueprint
+from resources.task import blp as TaskBlueprint
+
+from celery_config import make_celery
 
 
 def create_app(db_url=None):
@@ -34,11 +37,21 @@ def create_app(db_url=None):
         "DATABASE_URL", "sqlite:///data.db"
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["CELERY_BROKER_URL"] = os.getenv(
+        "CELERY_BROKER_URL", "redis://localhost:6379"
+    )
+    app.config["RESULT_BACKEND_CELERY"] = os.getenv(
+        "RESULT_BACKEND_CELERY", "redis://localhost:6379"
+    )
+
     db.init_app(app)
     migrate = Migrate(app, db)
     api = Api(app)
 
     api.register_blueprint(ItemBlueprint)
     api.register_blueprint(StoreBlueprint)
+    api.register_blueprint(TaskBlueprint)
+
+    celery = make_celery(app)
 
     return app
