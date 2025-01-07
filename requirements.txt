@@ -6,3 +6,6 @@ sqlalchemy
 flask-sqlalchemy
 
 flask-migrate
+
+gunicorn
+psycopg2-binary

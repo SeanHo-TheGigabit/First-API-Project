@@ -9,7 +9,7 @@ https://rest-apis-flask.teclado.com/docs/course_intro/
 
 ```sh
 docker build -t flask-smorest-api .
-docker run --rm -d --name backend -p 5000:5000 -w /app -v "$(pwd):/app" flask-smorest-api
+docker run --rm -d --name backend -p 5000:5000 -w /app -v "$(pwd):/app" flask-smorest-api sh -c "flask run --host 0.0.0.0"
 ```
 
 2. Go to <http://localhost:5000/swagger-ui> to see the API documentation
@@ -35,3 +35,18 @@ flask db upgrade
 ```
 
 To set the default value for the new column: [ref](https://rest-apis-flask.teclado.com/docs/flask_migrate/manually_review_modify_migrations/)
+
+### Docker deploy
+
+Start the services
+
+```sh
+docker compose up
+```
+
+Rebuild the image
+
+```sh
+docker compose up --build --force-recreate --no-deps web
+```
+

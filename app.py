@@ -4,6 +4,7 @@ from flask import Flask
 from flask_smorest import Api
 from flask_migrate import Migrate
 
+from dotenv import load_dotenv
 from db import db
 
 import models
@@ -19,6 +20,7 @@ def create_app(db_url=None):
     This is especially useful for testing, but also if you want to do things like have staging and production apps.
     """
     app = Flask(__name__)
+    load_dotenv()
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["API_TITLE"] = "Stores REST API"
     app.config["API_VERSION"] = "v1"
