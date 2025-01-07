@@ -1,5 +1,27 @@
-https://rest-apis-flask.teclado.com/docs/course_intro/
+# First API Project
 
+This is a project to learn how to create a RESTful API using Flask and Flask-Smorest.
+
+Tasks:
+
+- Setup Mac Python Environment
+- Install & Configure PostgreSQL
+- Install & Configure Flask
+- Install & Configure SQL Alchemy & Alembic
+- Install & Configure Flask-Smorest
+- Install & Configure Celery
+
+Ref:
+
+- https://rest-apis-flask.teclado.com/docs/course_intro/
+- https://flask.palletsprojects.com/en/stable/
+- https://flask-smorest.readthedocs.io/en/latest/
+
+## Getting Start
+
+1. Create `.env` file and fill in the value
+2. Docker start the project `docker compose up --build`
+3. Navigate to <http://localhost:5000/swagger-ui> to see the API documentation and perform testing.
 
 ## Development
 

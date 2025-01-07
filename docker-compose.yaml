@@ -6,12 +6,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - ./.env
     volumes:
       - .:/app
   db:
-    image: postgres
+    image: postgres:17.2-bookworm
     ports:
       - "5432:5432"
     environment:
@@ -23,5 +25,29 @@ services:
       test: pg_isready -d $${POSTGRES_DB} -U postgres
       interval: 2s
       retries: 10
+
+  redis:
+    image: redis:7.4.1-bookworm
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 10
+
+  celery:
+    build: .
+    command: celery -A celery_config.celery worker --loglevel=info
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - ./.env
+    volumes:
+      - .:/app
+
 volumes:
   postgres_data:
+  redis_data:

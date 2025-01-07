@@ -44,3 +44,14 @@ class TagAndItemSchema(Schema):
     message = fields.Str()
     item = fields.Nested(ItemSchema)
     tag = fields.Nested(TagSchema)
+
+
+class TaskSchema(Schema):
+    x = fields.Int(required=True)
+    y = fields.Int(required=True)
+
+
+class TaskResultSchema(Schema):
+    task_id = fields.Str()
+    status = fields.Str()
+    result = fields.Int(allow_none=True)
