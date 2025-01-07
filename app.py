@@ -14,6 +14,7 @@ from resources.user import blp as UserBlueprint
 from resources.task import blp as TaskBlueprint
 
 from celery_config import make_celery
+from blocklist import BLOCKLIST
 
 
 def create_app(db_url=None):
@@ -90,6 +91,19 @@ def create_app(db_url=None):
                     "description": "Request does not contain an access token.",
                     "error": "authorization_required",
                 }
+            ),
+            401,
+        )
+
+    @jwt.token_in_blocklist_loader
+    def check_if_token_in_blocklist(jwt_header, jwt_payload):
+        return jwt_payload["jti"] in BLOCKLIST
+
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):
+        return (
+            jsonify(
+                {"description": "The token has been revoked.", "error": "token_revoked"}
             ),
             401,
         )

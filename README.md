@@ -44,6 +44,12 @@ docker run --rm -d --name backend -p 5000:5000 -w /app -v "$(pwd):/app" flask-sm
 | ✅ DELETE | /item/{id}/tag/{id} | Unlink a tag from an item.                              |
 | ✅ GET    | /tag/{id}           | Get information about a tag given its unique id.        |
 | ✅ DELETE | /tag/{id}           | Delete a tag, which must have no associated items.      |
+| POST     | /register            | Create user accounts given an email and password.       |
+| POST     | /login               | Get a JWT given an email and password.                  |
+| 🔒 POST  | /logout              | Revoke a JWT.                                           |
+| 🔒 POST  | /refresh             | Get a fresh JWT given a refresh JWT.                    |
+| GET      | /user/{user_id}      | (dev-only) Get info about a user given their ID.        |
+| DELETE   | /user/{user_id}      | (dev-only) Delete a user given their ID.                |
 
 ### DB Related Operations
 
