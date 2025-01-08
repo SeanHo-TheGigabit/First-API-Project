@@ -14,6 +14,7 @@ from resources.item import blp as ItemBlueprint
 from resources.store import blp as StoreBlueprint
 from resources.user import blp as UserBlueprint
 from resources.task import blp as TaskBlueprint
+from resources.homepage import blp as HomepageBlueprint
 
 from models import TokenBlocklist
 
@@ -75,6 +76,7 @@ def create_app(db_url=None):
     api.register_blueprint(StoreBlueprint)
     api.register_blueprint(UserBlueprint)
     api.register_blueprint(TaskBlueprint)
+    api.register_blueprint(HomepageBlueprint)
 
     ## Print all app configurations
     if app.config["DEBUG"]:
