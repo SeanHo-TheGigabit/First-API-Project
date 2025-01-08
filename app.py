@@ -8,13 +8,13 @@ from flask_jwt_extended import JWTManager
 
 from dotenv import load_dotenv
 from db import db
+from celery import Celery
 
 from resources.item import blp as ItemBlueprint
 from resources.store import blp as StoreBlueprint
 from resources.user import blp as UserBlueprint
 from resources.task import blp as TaskBlueprint
 
-from celery_config import make_celery
 from models import TokenBlocklist
 
 
@@ -54,6 +54,7 @@ def create_app(db_url=None):
         "RESULT_BACKEND_CELERY", "redis://localhost:6379"
     )
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", None)
+
     if app.config["JWT_SECRET_KEY"] is None:
         raise ValueError("No JWT secret key set")
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=1)
@@ -68,8 +69,6 @@ def create_app(db_url=None):
     api.register_blueprint(StoreBlueprint)
     api.register_blueprint(UserBlueprint)
     api.register_blueprint(TaskBlueprint)
-
-    celery = make_celery(app)
 
     ## Print all app configurations
     if app.config["DEBUG"]:
@@ -127,3 +126,38 @@ def create_app(db_url=None):
         )
 
     return app
+
+
+def make_celery(app):
+    """
+    Create a new Celery object and tie together the Celery config to the app's
+    config. Wrap all tasks in the context of the application.
+
+    :param app: Flask app
+    :return: Celery app
+
+    ref: https://github.com/nickjj/build-a-saas-app-with-flask/blob/master/snakeeyes/app.py#L15
+    """
+    celery = Celery(
+        app.import_name,
+        backend=app.config["RESULT_BACKEND_CELERY"],
+        broker=app.config["CELERY_BROKER_URL"],
+        include=["celery_blueprint.tasks"],
+    )
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+    celery.conf.update(app.config.get("CELERY_CONFIG", {}))
+    celery.set_default()
+    app.extensions["celery"] = celery
+
+    return celery
+
+
+celery_app = make_celery(create_app())

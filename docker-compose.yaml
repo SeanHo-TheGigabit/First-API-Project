@@ -39,7 +39,7 @@ services:
 
   celery:
     build: .
-    command: celery -A celery_config.celery worker --loglevel=info
+    command: celery -A app.celery_app worker --loglevel=info
     depends_on:
       - redis
       - db

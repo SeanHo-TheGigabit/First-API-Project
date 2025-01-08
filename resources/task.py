@@ -4,9 +4,9 @@ from flask_smorest import Blueprint
 from celery.result import AsyncResult
 
 from .schemas import TaskSchema, TaskResultSchema
-from tasks import add
 
 blp = Blueprint("Tasks", __name__, description="Operations on tasks")
+
 
 @blp.route("/task/add")
 class AddTask(MethodView):
@@ -14,8 +14,11 @@ class AddTask(MethodView):
     @blp.response(202, TaskResultSchema)
     def post(self, task_data):
         """Create a new add task"""
+        from celery_blueprint.tasks import add
+
         task = add.apply_async(args=[task_data["x"], task_data["y"]])
         return {"task_id": task.id}, 202
+
 
 @blp.route("/task/<string:task_id>")
 class TaskStatus(MethodView):
