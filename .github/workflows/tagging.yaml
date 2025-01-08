@@ -49,28 +49,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          persist-credentials: false
+  #   steps:
+  #     - name: Check out code
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
+  #         persist-credentials: false
 
-      - id: release
-        name: Prepare release
-        uses: mgoltzsche/conventional-release@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IGNORE_COMMITS_BEFORE: '2025-01-07'
+  #     - id: release
+  #       name: Prepare release
+  #       uses: mgoltzsche/conventional-release@v0
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         IGNORE_COMMITS_BEFORE: '2025-01-07'
 
-      # ... Build artifact ...
+  #     # ... Build artifact ...
 
-      - name: Publish artifact
-        if: steps.release.outputs.publish # To run only when release build
-        run: |
-          set -u
-          echo Publishing $RELEASE_VERSION
+  #     - name: Publish artifact
+  #       if: steps.release.outputs.publish # To run only when release build
+  #       run: |
+  #         set -u
+  #         echo Publishing $RELEASE_VERSION
