@@ -47,11 +47,17 @@ def create_app(db_url=None):
         "DATABASE_URL", "sqlite:///data.db"
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["CELERY_BROKER_URL"] = os.getenv(
-        "CELERY_BROKER_URL", "redis://localhost:6379"
-    )
-    app.config["RESULT_BACKEND_CELERY"] = os.getenv(
-        "RESULT_BACKEND_CELERY", "redis://localhost:6379"
+    app.config["CELERY_CONFIG"] = dict(
+        broker_url=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379"),
+        result_backend=os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379"),
+        task_ignore_result=True,
+        include=["celery_blueprint.tasks"],
+        beat_schedule={
+            "task-every-10-seconds": {
+                "task": "celery_blueprint.tasks.hello_world",
+                "schedule": 10,
+            }
+        },
     )
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", None)
 
@@ -140,9 +146,6 @@ def make_celery(app):
     """
     celery = Celery(
         app.import_name,
-        backend=app.config["RESULT_BACKEND_CELERY"],
-        broker=app.config["CELERY_BROKER_URL"],
-        include=["celery_blueprint.tasks"],
     )
     celery.conf.update(app.config)
     TaskBase = celery.Task
