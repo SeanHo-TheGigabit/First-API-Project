@@ -8,7 +8,7 @@ from flask_smorest import Blueprint, abort
 from db import db
 from models import StoreModel
 
-from .schemas import StoreSchema
+from .schemas import StoreSchema, GeneralResponseSchema
 
 
 blp = Blueprint("stores", __name__, description="Operations on stores")
@@ -22,6 +22,7 @@ class Store(MethodView):
         store = StoreModel.query.get_or_404(store_id)
         return store
 
+    @blp.response(200, GeneralResponseSchema)
     def delete(self, store_id):
         """Delete a store by ID"""
         store = StoreModel.query.get_or_404(store_id)

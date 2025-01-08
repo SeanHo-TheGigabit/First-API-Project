@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from db import db
 from models import ItemModel
 
-from .schemas import ItemSchema, ItemUpdateSchema
+from .schemas import ItemSchema, ItemUpdateSchema, GeneralResponseSchema
 
 blp = Blueprint("Items", __name__, description="Operations on items")
 
@@ -21,6 +21,7 @@ class Item(MethodView):
         return item
 
     @jwt_required()
+    @blp.response(200, GeneralResponseSchema)
     def delete(self, item_id):
         """Delete an item by ID"""
         jwt = get_jwt()
