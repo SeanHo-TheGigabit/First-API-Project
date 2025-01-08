@@ -51,7 +51,6 @@ def create_app(db_url=None):
     app.config["CELERY_CONFIG"] = dict(
         broker_url=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379"),
         result_backend=os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379"),
-        task_ignore_result=True,
         include=["celery_blueprint.tasks"],
         beat_schedule={
             "task-every-10-seconds": {
