@@ -21,7 +21,7 @@ Ref:
 
 1. Create `.env` file and fill in the value
 2. Docker start the project `docker compose up --build`
-3. Navigate to <http://localhost:5000/swagger-ui> to see the API documentation and perform testing.
+3. Navigate to <http://localhost:5000/docs> to see the API documentation and perform testing.
 
 ## Development
 
