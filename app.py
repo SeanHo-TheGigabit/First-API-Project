@@ -15,7 +15,7 @@ from resources.user import blp as UserBlueprint
 from resources.task import blp as TaskBlueprint
 
 from celery_config import make_celery
-from blocklist import BLOCKLIST
+from models import TokenBlocklist
 
 
 def create_app(db_url=None):
@@ -113,7 +113,9 @@ def create_app(db_url=None):
 
     @jwt.token_in_blocklist_loader
     def check_if_token_in_blocklist(jwt_header, jwt_payload):
-        return jwt_payload["jti"] in BLOCKLIST
+        jti = jwt_payload["jti"]
+        token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()
+        return token is not None
 
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header, jwt_payload):

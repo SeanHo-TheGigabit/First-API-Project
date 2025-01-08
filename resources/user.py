@@ -13,6 +13,7 @@ from db import db
 from models import UserModel
 from .schemas import UserSchema, LoginSchema, RefreshSchema, GeneralResponseSchema
 from blocklist import BLOCKLIST
+from .util import block_jti
 
 
 blp = Blueprint("Users", "users", description="Operations on users")
@@ -84,10 +85,12 @@ class UserLogout(MethodView):
     @jwt_required()
     @blp.response(200, GeneralResponseSchema)
     def post(self):
+        current_user = get_jwt_identity()
         jwt = get_jwt()
-        print("JWT: ", jwt)
         jti = jwt["jti"]
-        BLOCKLIST.add(jti)
+        ttype = jwt["type"]
+
+        token = block_jti(jti, ttype, current_user)
         return {"message": "Successfully logged out"}, 200
 
 
@@ -99,6 +102,9 @@ class TokenRefresh(MethodView):
         current_user = get_jwt_identity()
         new_token = create_access_token(identity=current_user, fresh=False)
         # Make it clear that when to add the refresh token to the blocklist will depend on the app design
-        jti = get_jwt()["jti"]
-        BLOCKLIST.add(jti)
+        jwt = get_jwt()
+        jti = jwt["jti"]
+        ttype = jwt["type"]
+
+        token = block_jti(jti, ttype, current_user)
         return {"access_token": new_token}, 200
