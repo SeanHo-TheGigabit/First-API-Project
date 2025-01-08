@@ -11,7 +11,7 @@ from passlib.hash import pbkdf2_sha256
 
 from db import db
 from models import UserModel
-from .schemas import UserSchema
+from .schemas import UserSchema, LoginSchema, RefreshSchema, GeneralResponseSchema
 from blocklist import BLOCKLIST
 
 
@@ -21,6 +21,7 @@ blp = Blueprint("Users", "users", description="Operations on users")
 @blp.route("/register")
 class UserRegister(MethodView):
     @blp.arguments(UserSchema)
+    @blp.response(201, GeneralResponseSchema)
     def post(self, user_data):
         if UserModel.query.filter(UserModel.username == user_data["username"]).first():
             abort(409, message="A user with that username already exists.")
@@ -29,11 +30,6 @@ class UserRegister(MethodView):
             username=user_data["username"],
             password=pbkdf2_sha256.hash(user_data["password"]),
         )
-
-        if user and pbkdf2_sha256.verify(user_data["password"], user.password):
-            access_token = create_access_token(identity=str(user.id), fresh=True)
-            refresh_token = create_refresh_token(user.id)
-            return {"access_token": access_token, "refresh_token": refresh_token}, 200
 
         db.session.add(user)
         db.session.commit()
@@ -55,6 +51,8 @@ class User(MethodView):
         user = UserModel.query.get_or_404(user_id)
         return user
 
+    @blp.arguments(UserSchema)
+    @blp.response(200, UserSchema)
     def delete(self, user_id):
         user = UserModel.query.get_or_404(user_id)
         db.session.delete(user)
@@ -65,14 +63,18 @@ class User(MethodView):
 @blp.route("/login")
 class UserLogin(MethodView):
     @blp.arguments(UserSchema)
+    @blp.response(200, LoginSchema)
     def post(self, user_data):
         user = UserModel.query.filter(
             UserModel.username == user_data["username"]
         ).first()
 
         if user and pbkdf2_sha256.verify(user_data["password"], user.password):
-            access_token = create_access_token(identity=str(user.id))
-            return {"access_token": access_token}, 200
+            access_token = create_access_token(identity=str(user.id), fresh=True)
+            refresh_token = create_refresh_token(identity=str(user.id))
+            response = {"access_token": access_token, "refresh_token": refresh_token}
+            print("Response: ", response)
+            return response, 200
 
         abort(401, message="Invalid credentials.")
 
@@ -80,8 +82,11 @@ class UserLogin(MethodView):
 @blp.route("/logout")
 class UserLogout(MethodView):
     @jwt_required()
+    @blp.response(200, GeneralResponseSchema)
     def post(self):
-        jti = get_jwt()["jti"]
+        jwt = get_jwt()
+        print("JWT: ", jwt)
+        jti = jwt["jti"]
         BLOCKLIST.add(jti)
         return {"message": "Successfully logged out"}, 200
 
@@ -89,6 +94,7 @@ class UserLogout(MethodView):
 @blp.route("/refresh")
 class TokenRefresh(MethodView):
     @jwt_required(refresh=True)
+    @blp.response(200, RefreshSchema)
     def post(self):
         current_user = get_jwt_identity()
         new_token = create_access_token(identity=current_user, fresh=False)

@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from flask import Flask, jsonify
 from flask_smorest import Api
@@ -30,9 +31,17 @@ def create_app(db_url=None):
     app.config["API_VERSION"] = "v1"
     app.config["OPENAPI_VERSION"] = "3.0.3"
     app.config["OPENAPI_URL_PREFIX"] = "/"
-    app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
+    app.config["OPENAPI_SWAGGER_UI_PATH"] = "/docs"
     app.config["OPENAPI_SWAGGER_UI_URL"] = (
         "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
+    )
+    app.config["OPENAPI_REDOC_PATH"] = "/redoc"
+    app.config["OPENAPI_REDOC_URL"] = (
+        "https://rebilly.github.io/ReDoc/releases/latest/redoc.min.js"
+    )
+    app.config["OPENAPI_RAPIDOC_PATH"] = "/rapidoc"
+    app.config["OPENAPI_RAPIDOC_URL"] = (
+        "https://cdn.jsdelivr.net/npm/rapidoc/dist/rapidoc-min.js"
     )
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv(
         "DATABASE_URL", "sqlite:///data.db"
@@ -47,6 +56,8 @@ def create_app(db_url=None):
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", None)
     if app.config["JWT_SECRET_KEY"] is None:
         raise ValueError("No JWT secret key set")
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=1)
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(minutes=5)
     jwt = JWTManager(app)
 
     db.init_app(app)
@@ -59,6 +70,11 @@ def create_app(db_url=None):
     api.register_blueprint(TaskBlueprint)
 
     celery = make_celery(app)
+
+    ## Print all app configurations
+    if app.config["DEBUG"]:
+        for key, value in app.config.items():
+            print(f"{key}: {value}")
 
     ## JWT error handling
     @jwt.additional_claims_loader
