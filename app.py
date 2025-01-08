@@ -8,13 +8,14 @@ from flask_jwt_extended import JWTManager
 
 from dotenv import load_dotenv
 from db import db
+from celery import Celery
 
 from resources.item import blp as ItemBlueprint
 from resources.store import blp as StoreBlueprint
 from resources.user import blp as UserBlueprint
 from resources.task import blp as TaskBlueprint
+from resources.homepage import blp as HomepageBlueprint
 
-from celery_config import make_celery
 from models import TokenBlocklist
 
 
@@ -47,13 +48,20 @@ def create_app(db_url=None):
         "DATABASE_URL", "sqlite:///data.db"
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["CELERY_BROKER_URL"] = os.getenv(
-        "CELERY_BROKER_URL", "redis://localhost:6379"
-    )
-    app.config["RESULT_BACKEND_CELERY"] = os.getenv(
-        "RESULT_BACKEND_CELERY", "redis://localhost:6379"
+    app.config["CELERY_CONFIG"] = dict(
+        broker_url=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379"),
+        result_backend=os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379"),
+        task_ignore_result=True,
+        include=["celery_blueprint.tasks"],
+        beat_schedule={
+            "task-every-10-seconds": {
+                "task": "celery_blueprint.tasks.hello_world",
+                "schedule": 10,
+            }
+        },
     )
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", None)
+
     if app.config["JWT_SECRET_KEY"] is None:
         raise ValueError("No JWT secret key set")
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=1)
@@ -68,8 +76,7 @@ def create_app(db_url=None):
     api.register_blueprint(StoreBlueprint)
     api.register_blueprint(UserBlueprint)
     api.register_blueprint(TaskBlueprint)
-
-    celery = make_celery(app)
+    api.register_blueprint(HomepageBlueprint)
 
     ## Print all app configurations
     if app.config["DEBUG"]:
@@ -127,3 +134,35 @@ def create_app(db_url=None):
         )
 
     return app
+
+
+def make_celery(app):
+    """
+    Create a new Celery object and tie together the Celery config to the app's
+    config. Wrap all tasks in the context of the application.
+
+    :param app: Flask app
+    :return: Celery app
+
+    ref: https://github.com/nickjj/build-a-saas-app-with-flask/blob/master/snakeeyes/app.py#L15
+    """
+    celery = Celery(
+        app.import_name,
+    )
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+    celery.conf.update(app.config.get("CELERY_CONFIG", {}))
+    celery.set_default()
+    app.extensions["celery"] = celery
+
+    return celery
+
+
+celery_app = make_celery(create_app())
